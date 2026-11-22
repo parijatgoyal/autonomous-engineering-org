@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delivery Control Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fg:#1f2328;--muted:#59636e;--faint:#818b98;--border:#d1d9e0;--border-soft:#e8ecf0;
+  --canvas:#fff;--subtle:#f6f8fa;--paper:#f5f5f4;
+  --ink:#0e1229;--accent:#f97316;--accent-deep:#c2410c;
+  --green:#1a7f37;--green-btn:#1f883d;--green-bg:#dafbe1;--red:#d1242f;--red-bg:#ffebe9;--amber:#9a6700;--amber-bg:#fff8c5;
+  --purple:#8250df;--purple-bg:#fbefff;--blue:#0969da;--blue-bg:#ddf4ff;
+  --add-bg:#e6ffec;--add-gutter:#ccffd8;--del-bg:#ffebe9;--del-gutter:#ffd7d5;--hunk-bg:#ddf4ff;
+  --sans:"Geist",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --serif:"Source Serif 4",Georgia,serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--canvas);color:var(--fg);font:14px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+button,input,textarea,select{font:inherit;color:inherit}
+code,.mono{font-family:var(--mono);font-size:12.5px}
+code{background:rgba(129,139,152,.15);padding:.15em .4em;border-radius:6px}
+.hidden{display:none!important}.muted{color:var(--muted)}.faint{color:var(--faint)}
+svg.oc{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;vertical-align:text-bottom;flex:none}
+h1.page{font:400 28px/1.2 var(--serif);letter-spacing:-.02em;margin:0 0 16px}
+
+/* header: Glenley brand, GitHub structure */
+header{background:var(--paper);border-bottom:1px solid var(--border)}
+.hbar{max-width:1280px;margin:auto;padding:12px 24px;display:flex;align-items:center;gap:20px}
+.brand{display:flex;align-items:center;gap:10px;color:var(--ink)}.brand:hover{text-decoration:none}
+.mark{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:var(--ink);color:#fff;font:600 13px var(--mono)}
+.brand b{font:500 18px var(--serif);letter-spacing:-.02em}
+.topnav{display:flex;gap:4px;flex-wrap:wrap}
+.topnav a{color:var(--fg);padding:6px 10px;border-radius:6px;font-weight:500;display:flex;gap:6px;align-items:center}
+.topnav a:hover{background:rgba(129,139,152,.12);text-decoration:none}
+.topnav a.on{background:#fff;box-shadow:0 0 0 1px var(--border)}
+.counter{display:inline-block;min-width:20px;padding:0 6px;border-radius:99px;background:rgba(129,139,152,.18);font-size:12px;font-weight:500;line-height:18px;text-align:center;color:var(--fg)}
+.counter.hot{background:var(--accent);color:#fff}
+.hright{margin-left:auto;display:flex;align-items:center;gap:12px}
+.iconbtn{position:relative;display:grid;place-items:center;width:32px;height:32px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer;color:var(--muted)}
+.iconbtn:hover{text-decoration:none;color:var(--fg)}
+.iconbtn .dotn{position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:99px;background:var(--accent);border:2px solid var(--paper)}
+.av{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:99px;font:600 9px var(--mono);color:#fff;flex:none;vertical-align:middle}
+.av.lg{width:32px;height:32px;font-size:11px}.av.bot{border-radius:6px}
+.who{display:flex;align-items:center;gap:8px;font-size:13px}.who small{display:block;color:var(--muted);font-size:11.5px;line-height:1.1}
+@media(max-width:760px){.hbar{flex-wrap:wrap;padding:10px 16px}.brand b{display:none}.who small,.who>div{display:none}}
+
+.wrap{max-width:1280px;margin:auto;padding:24px 24px 80px}
+@media(max-width:760px){.wrap{padding:16px}}
+.box{border:1px solid var(--border);border-radius:6px;background:#fff}
+.box-h{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--subtle);border-bottom:1px solid var(--border);border-radius:6px 6px 0 0;flex-wrap:wrap}
+.box-row{display:flex;gap:10px;padding:10px 16px;border-top:1px solid var(--border-soft);align-items:flex-start}
+.box-h+.box-row{border-top:0}
+.btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:6px;border:1px solid var(--border);background:var(--subtle);cursor:pointer;font-weight:500;font-size:14px;white-space:nowrap;color:var(--fg)}
+.btn:hover{background:#eef1f4;text-decoration:none}.btn.sm{height:28px;font-size:12.5px;padding:0 10px}
+.btn.primary{background:var(--green-btn);border-color:rgba(31,35,40,.15);color:#fff}.btn.primary:hover{background:#1c8139}
+.btn.danger{color:var(--red)}.btn.danger:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-group{display:inline-flex}.btn-group .btn{border-radius:0}.btn-group .btn:first-child{border-radius:6px 0 0 6px}.btn-group .btn:last-child{border-radius:0 6px 6px 0}.btn-group .btn+.btn{margin-left:-1px}
+.btn-group .btn.on{background:#fff;box-shadow:inset 0 0 0 1px var(--fg);position:relative;z-index:1}
+input[type=text],input[type=password],input[type=number],textarea,select{width:100%;padding:6px 12px;min-height:32px;border-radius:6px;border:1px solid var(--border);background:var(--subtle);outline:none}
+input:focus,textarea:focus,select:focus{background:#fff;border-color:var(--blue);box-shadow:0 0 0 3px rgba(9,105,218,.25)}
+textarea{min-height:100px;resize:vertical;line-height:1.5}
+.lbl{display:inline-flex;align-items:center;padding:0 8px;height:20px;border-radius:99px;font-size:12px;font-weight:500;border:1px solid transparent;white-space:nowrap}
+.lbl.red{background:var(--red-bg);color:var(--red);border-color:rgba(209,36,47,.25)}
+.lbl.amber{background:var(--amber-bg);color:var(--amber);border-color:rgba(154,103,0,.25)}
+.lbl.blue{background:var(--blue-bg);color:var(--blue);border-color:rgba(9,105,218,.25)}
+.lbl.gray{background:var(--subtle);color:var(--muted);border-color:var(--border)}
+.lbl.green{background:var(--green-bg);color:var(--green);border-color:rgba(26,127,55,.25)}
+.lbl.purple{background:var(--purple-bg);color:var(--purple);border-color:rgba(130,80,223,.25)}
+.state{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;color:#fff;font-weight:500;font-size:14px}
+.state.open{background:var(--green-btn)}.state.merged{background:var(--purple)}.state.closed{background:var(--red)}.state.wait{background:#bf8700}.state.run{background:var(--blue)}.state.draft{background:#59636e}
+.ic-green{color:var(--green)}.ic-red{color:var(--red)}.ic-amber{color:#bf8700}.ic-purple{color:var(--purple)}.ic-blue{color:var(--blue)}.ic-gray{color:var(--faint)}
+.spin{animation:spin 1.2s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+
+/* PR-style list */
+.listrow{display:flex;gap:10px;padding:10px 16px;border-top:1px solid var(--border-soft);align-items:flex-start}
+.box-h+.listrow{border-top:0}
+.listrow:hover{background:var(--subtle)}
+.listrow .ti{font-weight:600;font-size:15px;color:var(--fg)}.listrow .ti:hover{color:var(--blue)}
+.listrow .meta{font-size:12px;color:var(--muted);margin-top:2px}
+.listrow .rt{margin-left:auto;display:flex;gap:14px;align-items:center;color:var(--muted);font-size:12px;flex:none}
+.filters{display:flex;gap:14px;font-weight:500}
+.filters a{color:var(--muted);display:flex;gap:6px;align-items:center}.filters a.on{color:var(--fg)}
+@media(max-width:600px){.listrow .rt{display:none}}
+
+/* PR header */
+.ptitle{font-size:30px;font-weight:400;line-height:1.25;margin:0;word-break:break-word}
+.ptitle .num{color:var(--faint);font-weight:300}
+.pmeta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 0;color:var(--muted)}
+.pmeta b{color:var(--fg)}
+.branch{font-family:var(--mono);font-size:12px;background:var(--blue-bg);color:var(--blue);padding:2px 6px;border-radius:6px;word-break:break-all}
+.tabnav{display:flex;gap:4px;border-bottom:1px solid var(--border);margin:20px 0 0;overflow-x:auto}
+.tabnav a{display:flex;align-items:center;gap:8px;padding:8px 14px;color:var(--fg);border-bottom:2px solid transparent;white-space:nowrap;margin-bottom:-1px}
+.tabnav a:hover{text-decoration:none;border-bottom-color:var(--border)}
+.tabnav a.on{border-bottom-color:var(--accent);font-weight:600}
+.tabnav .diffstat{margin-left:auto;align-self:center;font-family:var(--mono);font-size:12px;white-space:nowrap;padding-left:12px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:24px;margin-top:20px}
+@media(max-width:1000px){.layout{grid-template-columns:1fr}}
+
+/* conversation timeline */
+.tl{position:relative}
+.tl:before{content:"";position:absolute;left:63px;top:0;bottom:0;width:2px;background:var(--border-soft)}
+.comment{display:flex;gap:16px;margin-bottom:16px;position:relative}
+.comment .cbox{flex:1;min-width:0;border:1px solid var(--border);border-radius:6px;background:#fff}
+.comment .ch{padding:8px 16px;background:var(--subtle);border-bottom:1px solid var(--border);border-radius:6px 6px 0 0;font-size:13px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.comment .ch b{color:var(--fg)}
+.comment .cb{padding:14px 16px;overflow-wrap:anywhere}
+.comment .cb > :first-child{margin-top:0}.comment .cb > :last-child{margin-bottom:0}
+.comment > .av{margin-top:2px;position:relative;z-index:1}
+.tlitem{display:flex;gap:10px;align-items:flex-start;padding:4px 0 4px 48px;position:relative;font-size:13px;color:var(--muted)}
+.tlitem .badge{display:grid;place-items:center;width:32px;height:32px;border-radius:99px;background:#eef1f4;border:2px solid #fff;flex:none;color:var(--muted);position:relative;z-index:1}
+.tlitem .badge.green{background:var(--green-btn);color:#fff}.tlitem .badge.red{background:var(--red);color:#fff}
+.tlitem .badge.purple{background:var(--purple);color:#fff}.tlitem .badge.amber{background:#bf8700;color:#fff}.tlitem .badge.blue{background:var(--blue);color:#fff}
+.tlitem .tx{padding-top:6px;min-width:0;overflow-wrap:anywhere}.tlitem .tx b{color:var(--fg)}
+.tlitem .when{margin-left:6px;color:var(--faint)}
+@media(max-width:760px){.tl:before{left:15px}.comment>.av{display:none}.tlitem{padding-left:0}}
+.md h3{font-size:16px;margin:16px 0 8px;font-weight:600}.md p{margin:0 0 10px}.md ul{margin:0 0 10px;padding-left:22px}.md li{margin:2px 0}
+
+/* merge box */
+.mergebox{display:flex;gap:16px;margin-top:8px}
+.mergebox > .av{margin-top:2px}
+.mergebox .mb{flex:1;min-width:0;border:1px solid var(--border);border-radius:6px;background:#fff}
+.mergebox .mb.ok{border-color:var(--green-btn)}.mergebox .mb.bad{border-color:var(--red)}.mergebox .mb.merged{border-color:var(--purple)}
+@media(max-width:760px){.mergebox>.av{display:none}}
+.msec{display:flex;gap:12px;padding:14px 16px;border-top:1px solid var(--border-soft)}
+.msec:first-child{border-top:0}
+.msec .bigic{display:grid;place-items:center;width:32px;height:32px;border-radius:99px;flex:none;color:#fff}
+.msec h4{margin:0;font-size:14px}.msec p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.checkline{display:flex;gap:8px;align-items:center;padding:6px 0;font-size:13px;border-top:1px solid var(--border-soft)}
+.msec p+.checkline{margin-top:8px}
+.checkline .r{margin-left:auto;color:var(--faint);font-size:12px;white-space:nowrap}
+.actions{background:var(--subtle);border-radius:0 0 6px 6px;display:block}
+
+/* sidebar */
+.side h5{font-size:12px;color:var(--muted);margin:0 0 8px;font-weight:600}
+.side .sec{padding:0 0 16px;margin-bottom:16px;border-bottom:1px solid var(--border-soft);font-size:13px}
+.side .rev{display:flex;align-items:center;gap:8px;padding:3px 0}
+.side .rev .s{margin-left:auto}
+
+/* files changed */
+.ftoolbar{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+.fc{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;margin-top:16px}
+@media(max-width:1000px){.fc{grid-template-columns:1fr}.ftree{display:none}}
+.ftree{position:sticky;top:12px;align-self:start;font-size:13px;padding:8px}
+.ftree a{display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:6px;color:var(--fg)}
+.ftree a:hover{background:var(--subtle);text-decoration:none}
+.ftree .dir{color:var(--muted);padding:6px 8px 2px;font-size:12px;font-family:var(--mono)}
+.ftree .cnt{margin-left:auto;font-family:var(--mono);font-size:11px;white-space:nowrap}
+.file{border:1px solid var(--border);border-radius:6px;margin-bottom:16px;background:#fff;scroll-margin-top:12px}
+.file-h{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;padding:6px 10px 6px 6px;background:var(--subtle);border-bottom:1px solid var(--border);border-radius:6px 6px 0 0;font-size:12.5px}
+.file.collapsed .file-h{border-bottom:0;border-radius:6px}.file.collapsed .file-b{display:none}
+.file-h .path{font-family:var(--mono);font-weight:600;color:var(--fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.file-h .tog{border:0;background:none;cursor:pointer;color:var(--muted);padding:2px;display:grid;place-items:center}
+.file-h .viewed{margin-left:auto;display:flex;align-items:center;gap:6px;padding:2px 8px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;color:var(--muted);white-space:nowrap}
+.file-h .viewed input{margin:0}
+.sq{display:inline-flex;gap:1px;vertical-align:middle}.sq i{width:8px;height:8px;border-radius:1px;background:#d1d9e0}
+.sq i.a{background:var(--green-btn)}.sq i.d{background:var(--red)}
+.file-b{overflow-x:auto}
+@media(max-width:760px){.file-h .sq,.file-h .lbl{display:none}.file-h .path{direction:rtl;text-align:left}}
+table.diff{width:100%;border-collapse:collapse;font:12px/20px var(--mono);tab-size:4}
+table.diff td{padding:0 10px;vertical-align:top;white-space:pre}
+table.diff td.ln{width:1%;min-width:48px;text-align:right;color:var(--faint);user-select:none;background:#fff}
+table.diff.split{table-layout:fixed}table.diff.split col.lnc{width:56px}table.diff.split td.code{white-space:pre-wrap;overflow-wrap:anywhere;padding-left:24px;text-indent:-14px}table.diff.split td.ln{min-width:0}
+table.diff td.code:before{display:inline-block;width:16px;color:var(--faint);user-select:none}
+tr.add td.code,td.code.add{background:var(--add-bg)}tr.add td.ln,td.ln.add{background:var(--add-gutter);color:var(--fg)}
+tr.del td.code,td.code.del{background:var(--del-bg)}tr.del td.ln,td.ln.del{background:var(--del-gutter);color:var(--fg)}
+tr.add td.code:before,td.code.add:before{content:"+"}tr.del td.code:before,td.code.del:before{content:"-"}tr.ctx td.code:before,td.code.ctx:before{content:" "}
+td.code.empty,td.ln.empty{background:var(--subtle)}
+tr.hunk td{background:var(--hunk-bg);color:var(--muted);padding:4px 10px}
+.tok-k{color:#cf222e}.tok-s{color:#0a3069}.tok-c{color:#6e7781;font-style:italic}.tok-n{color:#0550ae}.tok-f{color:#8250df}
+
+/* checks */
+.checks{display:grid;grid-template-columns:300px minmax(0,1fr);border:1px solid var(--border);border-radius:6px;margin-top:16px;min-height:420px;overflow:hidden}
+@media(max-width:860px){.checks{grid-template-columns:1fr}.checks .cl{border-right:0!important;border-bottom:1px solid var(--border)}}
+.checks .cl{border-right:1px solid var(--border);background:var(--subtle);padding-bottom:8px}
+.checks .cl a{display:flex;gap:8px;align-items:flex-start;padding:8px 14px;color:var(--fg);border-left:3px solid transparent;font-size:13px}
+.checks .cl a:hover{background:#eef1f4;text-decoration:none}.checks .cl a.on{background:#fff;border-left-color:var(--accent);font-weight:600}
+.checks .cl a small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.checks .cl .grp{padding:12px 14px 4px;font-size:12px;font-weight:600;color:var(--muted)}
+.checks .cd{padding:16px 20px;min-width:0}
+.checks .cd h3{margin:0;font-size:16px}
+.logbox{background:#0d1117;color:#e6edf3;border-radius:6px;padding:12px 14px;font:12px/1.6 var(--mono);white-space:pre-wrap;overflow-x:auto;margin-top:8px}
+.steprow{display:flex;gap:8px;align-items:center;padding:7px 10px;border:1px solid var(--border-soft);border-radius:6px;margin-top:6px;font-size:13px}
+.steprow .r{margin-left:auto;color:var(--muted);font-family:var(--mono);font-size:11.5px;text-align:right}
+
+/* tables, task lists */
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th,table.t td{text-align:left;padding:8px 12px;border-top:1px solid var(--border-soft);vertical-align:top}
+table.t th{background:var(--subtle);font-weight:600;font-size:12px;color:var(--muted);border-top:0}
+table.t td.n,table.t th.n{text-align:right;font-family:var(--mono);font-size:12px}
+.tscroll{overflow-x:auto}
+.tasklist{list-style:none;padding:0;margin:0}
+.tasklist li{display:flex;gap:10px;padding:10px 16px;border-top:1px solid var(--border-soft)}
+.tasklist li:first-child{border-top:0}
+.tasklist .ck{width:16px;height:16px;border-radius:4px;border:1px solid var(--border);display:grid;place-items:center;flex:none;margin-top:2px}
+.tasklist .ck.on{background:var(--green-btn);border-color:var(--green-btn);color:#fff}.tasklist .ck svg{width:12px;height:12px}
+
+/* sign-in */
+.login{min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--paper)}
+.login .card{width:100%;max-width:400px}
+.login h1{font:400 28px/1.2 var(--serif);letter-spacing:-.02em;text-align:center;margin:14px 0 16px}
+.login .form{background:#fff;border:1px solid var(--border);border-radius:6px;padding:16px}
+.login label{display:block;font-weight:500;margin:0 0 6px}
+.demo{border:1px solid var(--border);border-radius:6px;margin-top:16px;background:#fff}
+.demo button{display:flex;gap:10px;align-items:center;width:100%;padding:8px 14px;border:0;border-top:1px solid var(--border-soft);background:none;cursor:pointer;text-align:left}
+.demo button:first-child{border-top:0}.demo button:hover{background:var(--subtle)}
+.demo small{display:block;color:var(--muted);font-size:12px}
+.err{color:var(--red);font-size:13px;margin-top:8px}
+.flash{padding:12px 16px;border:1px solid rgba(9,105,218,.3);background:var(--blue-bg);border-radius:6px;font-size:13px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start}
+.flash.warn{border-color:rgba(154,103,0,.3);background:var(--amber-bg)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--fg);color:#fff;padding:10px 16px;border-radius:6px;font-size:13px;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.blank{padding:40px 16px;text-align:center;color:var(--muted)}
+.blank h3{color:var(--fg);margin:8px 0 4px;font-size:18px}
+.formgrid{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:24px}@media(max-width:900px){.formgrid{grid-template-columns:1fr}}
+.wtabs{display:flex;gap:2px;padding:8px 8px 0;background:var(--subtle);border-bottom:1px solid var(--border);border-radius:6px 6px 0 0;align-items:flex-end}
+.wtabs button{border:1px solid transparent;border-bottom:0;background:none;padding:6px 14px;border-radius:6px 6px 0 0;cursor:pointer;color:var(--muted);margin-bottom:-1px}
+.wtabs button.on{background:#fff;border-color:var(--border);color:var(--fg)}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:6px 0}.check input{margin-top:3px}
+details.sim summary{cursor:pointer;font-weight:600;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div id="login" class="login hidden"><div class="card">
+  <div style="text-align:center"><span class="mark" style="display:inline-grid;width:48px;height:48px;border-radius:12px;font-size:16px">dr</span></div>
+  <h1>Sign in to the control room</h1>
+  <form id="loginForm" class="form">
+    <label for="u">Username</label><input id="u" type="text" autocomplete="username">
+    <label for="p" style="margin-top:14px">Password</label><input id="p" type="password" autocomplete="current-password">
+    <button class="btn primary" type="submit" style="width:100%;justify-content:center;margin-top:16px">Sign in</button>
+    <div id="loginErr" class="err"></div>
+  </form>
+  <div class="demo"><div class="box-h" style="padding:8px 14px;font-size:12px;font-weight:600;color:var(--muted)">Demo accounts</div><div id="demoUsers"></div></div>
+</div></div>
+
+<div id="app" class="hidden">
+  <header><div class="hbar">
+    <a class="brand" href="#/inbox"><span class="mark">dr</span><b>Delivery Control Room</b></a>
+    <nav class="topnav" id="topnav"></nav>
+    <div class="hright">
+      <a class="iconbtn" href="#/notifications" title="Notifications" id="bell"></a>
+      <div class="who"><span id="meAv"></span><div><span id="meName"></span><small id="meRole"></small></div></div>
+      <button class="btn sm" id="logout">Sign out</button>
+    </div>
+  </div></header>
+  <div class="wrap" id="view"></div>
+</div>
+
+<script>
+/* ================================================================ utils */
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ago=t=>{const s=Date.now()/1000-t;return s<45?"just now":s<3600?`${Math.max(1,Math.round(s/60))} min ago`:s<86400?`${Math.round(s/3600)} h ago`:new Date(t*1000).toLocaleDateString()};
+const plural=(n,w)=>`${n} ${w}${n===1?"":"s"}`;
+const P={check:"M3 8.5l3 3 7-7",x:"M4 4l8 8M12 4l-8 8",dot:"M8 8m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0",
+ pr:"M4 3m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M4 13m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M12 13m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M4 4.5v7M12 11.5V6a2 2 0 0 0-2-2H7m1.5-1.5L7 4l1.5 1.5",
+ merge:"M4 3m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M4 13m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M12 9m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M4 4.5v7M4 5c0 3 2 4 6.5 4",
+ closed:"M4 3m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M4 13m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M4 4.5v7M10 3l4 4M14 3l-4 4M12 9.5v2",
+ clock:"M8 8m-6 0a6 6 0 1 0 12 0a6 6 0 1 0-12 0M8 5v3l2 1.5",bell:"M4 11V7a4 4 0 0 1 8 0v4l1.5 1.5h-11zM6.5 14h3",
+ file:"M4 1.5h5l3 3v10H4zM9 1.5v3h3",commit:"M8 8m-2.5 0a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0M1 8h4.5M10.5 8H15",
+ comment:"M2 3h12v8H7l-3 3v-3H2z",shield:"M8 1.5l5.5 2v4c0 3.5-2.5 6-5.5 7c-3-1-5.5-3.5-5.5-7v-4z",
+ eye:"M1 8s2.5-5 7-5s7 5 7 5s-2.5 5-7 5s-7-5-7-5zM8 8m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0",
+ chev:"M6 4l4 4-4 4",chevd:"M4 6l4 4 4-4",play:"M5 3l8 5-8 5z",alert:"M8 1.5l6.5 12h-13zM8 6v3.5M8 11.5v.5",
+ book:"M2 2.5h5a1.5 1.5 0 0 1 1.5 1.5v10a1.5 1.5 0 0 0-1.5-1.5H2zM14 2.5H9.5A1.5 1.5 0 0 0 8 4v10a1.5 1.5 0 0 1 1.5-1.5H14z",
+ stack:"M8 1.5l6.5 3.5L8 8.5 1.5 5zM1.5 8L8 11.5 14.5 8M1.5 11L8 14.5 14.5 11",person:"M8 5m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0M2 14.5c.5-3 3-4.5 6-4.5s5.5 1.5 6 4.5",
+ gear:"M8 8m-2.5 0a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3",
+ plus:"M8 2v12M2 8h12",split:"M2 2.5h5v11H2zM9 2.5h5v11H9z",unified:"M2 2.5h12v11H2zM2 8h12",inbox:"M1.5 9.5l2-7h9l2 7v4h-13zM1.5 9.5h4l1 2h3l1-2h4",
+ slack:"M5.5 2.5a1.5 1.5 0 0 1 0 3H2.5M10.5 13.5a1.5 1.5 0 0 1 0-3h3M2.5 10.5a1.5 1.5 0 0 1 3 0v3M13.5 5.5a1.5 1.5 0 0 1-3 0v-3M7 9h2M7 7h2"};
+const ic=(n,cls="")=>`<svg class="oc ${cls}" viewBox="0 0 16 16" aria-hidden="true"><path d="${P[n]}"/></svg>`;
+const AVC=["#c2410c","#0969da","#8250df","#1a7f37","#bf3989","#0e1229"];
+const avatar=(name,lg)=>{const n=name||"?";const h=[...n].reduce((a,c)=>a+c.charCodeAt(0),0);return `<span class="av ${lg?"lg":""}" style="background:${AVC[h%AVC.length]}" title="${esc(n)}">${esc(n.split(/[ _]/).map(x=>x[0]).join("").slice(0,2).toUpperCase())}</span>`};
+const botav=(name,lg)=>`<span class="av bot ${lg?"lg":""}" style="background:var(--ink)" title="${esc(name)} agent">${esc(name.slice(0,2).toUpperCase())}</span>`;
+function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.append(t);setTimeout(()=>t.remove(),3200)}
+function md(text){ // tiny safe markdown: headings, bullet lists, bold, inline code
+  const inline=s=>esc(s).replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>");
+  let out="",list=false;
+  for(const raw of String(text||"").split("\n")){const l=raw.trimEnd();
+    if(/^\s*[-*] /.test(l)){if(!list){out+="<ul>";list=true}out+=`<li>${inline(l.replace(/^\s*[-*] /,""))}</li>`;continue}
+    if(list){out+="</ul>";list=false}
+    if(/^#{1,3} /.test(l))out+=`<h3>${inline(l.replace(/^#+ /,""))}</h3>`;else if(l)out+=`<p>${inline(l)}</p>`;}
+  return out+(list?"</ul>":"");
+}
+
+/* ================================================================ state */
+const ROLE={requester:"Requester",engineer:"Engineer",security:"Security",approver:"Tech lead",admin:"Admin"};
+const turn=a=>a.filter(x=>x!=="reject");
+const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}}};
+let me=null,meta=null,runs=[],users={},route="",lastKey="",timer=null,diffMode=store.get("diffMode")||"unified",selCheck=null;
+const viewed=new Set(JSON.parse(store.get("viewed")||"[]"));
+
+async function api(path,opt={}){
+  const r=await fetch(path,{credentials:"same-origin",headers:{"content-type":"application/json"},...opt});
+  if(r.status===401&&!path.endsWith("/login")){showLogin();throw new Error("Please sign in")}
+  const ct=r.headers.get("content-type")||"";const body=ct.includes("json")?await r.json():await r.text();
+  if(!r.ok)throw new Error(body.detail||r.statusText);return body;
+}
+function stateOf(st){return {RUNNING:["run","play","Agents working"],PLAN_REVIEW:["wait","clock","Plan review"],AWAITING_APPROVAL:["open","pr","Open"],
+  NEEDS_HUMAN:["closed","alert","Needs a person"],PAUSED:["wait","clock","Paused"],DEPLOYED:["merged","merge","Merged"],REJECTED:["closed","closed","Closed"],FAILED:["closed","x","Failed"]}[st]||["draft","dot",st]}
+const stateIcon=st=>ic(stateOf(st)[1],{RUNNING:"ic-blue",PLAN_REVIEW:"ic-amber",AWAITING_APPROVAL:"ic-green",NEEDS_HUMAN:"ic-red",PAUSED:"ic-amber",DEPLOYED:"ic-purple",REJECTED:"ic-red",FAILED:"ic-red"}[st]);
+const statePill=st=>{const [c,i,l]=stateOf(st);return `<span class="state ${c}">${ic(i)} ${l}</span>`};
+const short=id=>id.split("-").pop();
+const narrow=()=>window.matchMedia("(max-width:760px)").matches;
+const uname=u=>users[u]?.name||u||"someone";
+const CLOSED=["DEPLOYED","REJECTED","FAILED"];
+
+/* ================================================================ auth */
+const DEMO=[["asha","Asha Rao","Requester"],["dev","Dev Mehta","Engineer"],["sam","Sam Iyer","Security reviewer"],["priya","Priya Nair","Tech lead"],["admin","Ops Admin","Admin"]];
+function showLogin(){clearInterval(timer);me=null;$("#app").classList.add("hidden");$("#login").classList.remove("hidden");
+  $("#demoUsers").innerHTML=DEMO.map(([u,n,d])=>`<button type="button" data-u="${u}">${avatar(n,true)}<span><b>${n}</b><small>${d} · ${u} / ${u}-demo</small></span></button>`).join("");
+  $$("#demoUsers button").forEach(b=>b.onclick=()=>{$("#u").value=b.dataset.u;$("#p").value=b.dataset.u+"-demo";$("#p").focus()});}
+$("#loginForm").onsubmit=async e=>{e.preventDefault();$("#loginErr").textContent="";
+  try{await api("/api/login",{method:"POST",body:JSON.stringify({username:$("#u").value,password:$("#p").value})});boot()}catch(err){$("#loginErr").textContent=err.message}};
+$("#logout").onclick=async()=>{await api("/api/logout",{method:"POST"});location.hash="";showLogin()};
+
+async function boot(){
+  try{me=await api("/api/me")}catch{return}
+  [meta,users]=await Promise.all([api("/api/meta"),api("/api/users").then(l=>Object.fromEntries(l.map(u=>[u.username,u])))]);
+  $("#login").classList.add("hidden");$("#app").classList.remove("hidden");
+  $("#meAv").innerHTML=avatar(me.name,true);$("#meName").textContent=me.name;$("#meRole").textContent=`${ROLE[me.role]} · ${me.title}`;
+  if(!location.hash)location.hash="#/inbox";
+  clearInterval(timer);timer=setInterval(()=>tick(false),2000);tick(true);
+}
+window.addEventListener("hashchange",()=>{lastKey="";selCheck=null;tick(true);window.scrollTo(0,0)});
+
+/* ================================================================ router */
+async function tick(force){
+  if(!me)return;
+  const a=document.activeElement;
+  if(!force&&a&&["INPUT","TEXTAREA","SELECT"].includes(a.tagName))return;
+  if(!force&&$$("#view textarea").some(x=>x.value&&!x.dataset.prefill))return;
+  route=location.hash.slice(2)||"inbox";
+  const [r,notifs]=await Promise.all([api("/api/runs"),api("/api/notifications")]);runs=r;
+  renderChrome(notifs);
+  const [page,id,sub]=route.split("/");
+  if(page==="run")return renderRun(id,sub||"conversation",force);
+  const key=route+JSON.stringify(runs)+notifs.items.length;if(!force&&key===lastKey)return;lastKey=key;
+  if(page==="new")return renderNew();
+  if(page==="audit")return renderAudit();
+  if(page==="notifications")return renderNotifs(notifs);
+  if(page==="runs")return renderList(id||"open");
+  return renderInbox();
+}
+function renderChrome(n){
+  const mine=runs.filter(r=>turn(r.my_actions).length).length,cur=route.split("/")[0];
+  const items=[["inbox","inbox","Needs you",mine,true],["runs","pr","Runs",runs.filter(r=>!CLOSED.includes(r.status)).length]];
+  if(meta.can_create)items.push(["new","plus","New request"]);
+  if(meta.can_audit)items.push(["audit","shield","Audit"]);
+  $("#topnav").innerHTML=items.map(([k,i,l,c,hot])=>`<a href="#/${k}" class="${cur===k||(cur==="run"&&k==="runs")?"on":""}">${ic(i)} ${l}${c?` <span class="counter ${hot?"hot":""}">${c}</span>`:""}</a>`).join("");
+  const last=+(store.get("seen:"+me.username)||0),unread=n.items.filter(x=>x.created_at>last).length;
+  $("#bell").innerHTML=ic("bell")+(unread?`<span class="dotn"></span>`:"");$("#bell").title=unread?`${unread} unread notifications`:"Notifications";
+}
+
+/* ================================================================ lists */
+function checkSummary(r){if(r.rubric==null)return r.status==="RUNNING"?`<span title="Checks running">${ic("dot","ic-amber spin")}</span>`:"";return r.rubric===100?`<span title="All checks passed">${ic("check","ic-green")}</span>`:`<span title="Some checks failed">${ic("x","ic-red")}</span>`}
+function listRows(list,empty){
+  if(!list.length)return `<div class="blank">${ic("pr")}<h3>${empty||"Nothing here"}</h3><p>${meta.can_create?`<a href="#/new">Submit a new request</a> to get the agents started.`:"Runs that need you will show up here."}</p></div>`;
+  return list.map(r=>{const mine=turn(r.my_actions).length;
+    return `<div class="listrow"><span style="margin-top:3px">${stateIcon(r.status)}</span><div style="min-width:0">
+     <a class="ti" href="#/run/${r.id}">${esc(r.title)}</a> ${mine?`<span class="lbl amber">Your turn</span>`:""}
+     <div class="meta">#${short(r.id)} opened ${ago(r.created_at)} by ${esc(uname(r.created_by))}${r.waiting_on&&!CLOSED.includes(r.status)?` · ${esc(r.waiting_on)}`:""}</div></div>
+     <div class="rt">${checkSummary(r)}${r.iteration>1?`<span title="Build attempts">${ic("commit")} ${r.iteration}</span>`:""}${avatar(uname(r.created_by))}</div></div>`}).join("");
+}
+function renderInbox(){
+  const mine=runs.filter(r=>turn(r.my_actions).length);
+  const intro={requester:"Requests you submitted that need your input.",engineer:"Runs where the agents are stuck, disagree or paused.",
+    security:"Changes waiting for your security sign-off.",approver:"Changes ready for your approval. Your own requests never show up here.",admin:"Anything that needs an operator."}[me.role];
+  $("#view").innerHTML=`<h1 class="page">Needs you</h1>
+   <div class="box"><div class="box-h"><b>${plural(mine.length,"run")}</b><span class="muted">${intro}</span></div>${listRows(mine,"You're all caught up")}</div>`;
+}
+function renderList(f){
+  const open=runs.filter(r=>!CLOSED.includes(r.status)),closed=runs.filter(r=>CLOSED.includes(r.status)),mine=runs.filter(r=>r.created_by===me.username);
+  const list={open,closed,mine}[f]||open;
+  $("#view").innerHTML=`<div class="box"><div class="box-h"><div class="filters">
+    <a href="#/runs/open" class="${f==="open"?"on":""}">${ic("pr")} ${open.length} Open</a><a href="#/runs/closed" class="${f==="closed"?"on":""}">${ic("check")} ${closed.length} Closed</a>
+    ${meta.can_create?`<a href="#/runs/mine" class="${f==="mine"?"on":""}">${ic("person")} ${mine.length} Mine</a>`:""}</div>
+    ${meta.can_create?`<a class="btn primary sm" href="#/new" style="margin-left:auto">New request</a>`:""}</div>${listRows(list)}</div>`;
+}
+
+/* ================================================================ new request */
+function renderNew(){
+  if(!meta.can_create){$("#view").innerHTML=`<div class="box blank">${ic("shield")}<h3>Your role reviews work</h3><p>Requests come from requesters and engineers.</p></div>`;return}
+  const faults=Object.entries(meta.faults);
+  $("#view").innerHTML=`<h1 class="page" style="margin-bottom:4px">New request</h1><p class="muted" style="margin:0 0 20px">Agents plan, build and test this on a separate branch. Nothing reaches <code>main</code> without a tech lead's approval.</p>
+  <form id="nf" class="formgrid"><div style="display:flex;gap:16px">${avatar(me.name,true)}<div style="flex:1;min-width:0">
+    <input id="nt" type="text" placeholder="Title (optional: taken from the first line)" style="font-size:16px;margin-bottom:12px">
+    <div class="box"><div class="wtabs"><button type="button" class="on" data-w="write">Write</button><button type="button" data-w="preview">Preview</button>
+      <label class="btn sm" style="margin:0 0 6px auto;cursor:pointer">Load .md<input id="file" type="file" accept=".md,.txt" class="hidden"></label></div>
+      <div style="padding:8px"><textarea id="nr" data-prefill="1" style="min-height:280px;border:0;background:#fff">${esc(meta.sample_requirement)}</textarea><div id="pv" class="md hidden" style="padding:8px;min-height:280px"></div></div></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn primary" type="submit">Submit request</button></div></div></div>
+   <div class="side">
+    <div class="sec"><h5>Repository</h5><select id="repo">${meta.repositories.map(r=>`<option>${esc(r)}</option>`).join("")}</select></div>
+    <div class="sec"><h5>Plan review</h5><label class="check"><input id="pr" type="checkbox" checked><span>Let me confirm the acceptance criteria before design starts</span></label></div>
+    <div class="sec"><h5>Spend limit</h5><input id="cost" type="number" min="0.5" max="100" step="0.5" value="5"><div class="faint" style="font-size:12px;margin-top:4px">USD of model usage before a person must step in</div></div>
+    <div class="sec"><h5>Reviewers (from review policy)</h5>${(meta.review_policy.release_signoffs||[]).filter(g=>g.enabled!==false).map(g=>`<div class="rev">${ic("shield","ic-gray")} ${esc(g.label)} <span class="faint">if ${esc(g.when.replace("_"," "))}</span></div>`).join("")}<div class="rev">${ic("person","ic-gray")} Tech lead approval</div></div>
+    ${faults.length?`<details class="sim"><summary>Simulate failures (demo)</summary>${faults.map(([k,v])=>`<label class="check"><input type="checkbox" name="fault" value="${k}"><span><span class="mono">${k}</span><br><span class="muted" style="font-size:12px">${esc(v)}</span></span></label>`).join("")}</details>`:""}
+   </div></form>`;
+  $$("[data-w]").forEach(b=>b.onclick=()=>{$$("[data-w]").forEach(x=>x.classList.toggle("on",x===b));const pv=b.dataset.w==="preview";$("#nr").classList.toggle("hidden",pv);$("#pv").classList.toggle("hidden",!pv);$("#pv").innerHTML=md($("#nr").value)});
+  $("#file").onchange=async e=>{const f=e.target.files[0];if(f)$("#nr").value=await f.text()};
+  $("#nf").onsubmit=async e=>{e.preventDefault();
+    const body={requirement:$("#nr").value,title:$("#nt").value||null,repo:$("#repo").value,plan_review:$("#pr").checked,max_cost_usd:parseFloat($("#cost").value)||5,faults:$$("input[name=fault]:checked").map(i=>i.value)};
+    try{const r=await api("/api/runs",{method:"POST",body:JSON.stringify(body)});toast("Request submitted. The agents are on it.");location.hash="#/run/"+r.run_id}catch(err){toast(err.message)}};
+}
+
+/* ================================================================ diff */
+function parseDiff(t){const files=[];let f=null,h=null,o=0,n=0;
+  const lines=String(t||"").split("\n");if(lines.at(-1)==="")lines.pop();
+  for(const l of lines){
+    if(l.startsWith("diff --git")){f={path:l.split(" b/").pop(),hunks:[],add:0,del:0,status:"modified"};files.push(f);h=null;continue}
+    if(!f)continue;
+    if(!h){if(l.startsWith("new file"))f.status="added";else if(l.startsWith("deleted file"))f.status="deleted"}
+    const m=/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@(.*)/.exec(l);
+    if(m){o=+m[1];n=+m[2];h={header:l,lines:[]};f.hunks.push(h);continue}
+    if(!h)continue;
+    if(l.startsWith("+")){h.lines.push({t:"add",n:n++,s:l.slice(1)});f.add++}
+    else if(l.startsWith("-")){h.lines.push({t:"del",o:o++,s:l.slice(1)});f.del++}
+    else if(l.startsWith(" ")){h.lines.push({t:"ctx",o:o++,n:n++,s:l.slice(1)})}
+  }
+  return files}
+const KW="def|class|return|if|elif|else|for|while|in|import|from|as|raise|try|except|finally|with|None|True|False|and|or|not|is|lambda|pass|yield|async|await|assert|break|continue";
+const TOK=new RegExp(`(#.*$)|("""|''')|(f?"(?:\\\\.|[^"\\\\])*"|f?'(?:\\\\.|[^'\\\\])*')|\\b(${KW})\\b|\\b(\\d+(?:\\.\\d+)?)\\b|\\b([A-Za-z_]\\w*)(?=\\()`,"g");
+function hl(code,path){if(!/\.py$/.test(path))return esc(code);let out="",i=0,m;TOK.lastIndex=0;
+  while((m=TOK.exec(code))){if(!m[0].length){TOK.lastIndex++;continue}out+=esc(code.slice(i,m.index));const cls=m[1]?"c":m[2]||m[3]?"s":m[4]?"k":m[5]?"n":"f";out+=`<span class="tok-${cls}">${esc(m[0])}</span>`;i=m.index+m[0].length}
+  return out+esc(code.slice(i))}
+function squares(a,d){const t=a+d||1,ga=Math.round(5*a/t),gd=Math.min(5-ga,Math.round(5*d/t));return `<span class="sq" title="${a} additions, ${d} deletions">${"<i class=a></i>".repeat(ga)}${"<i class=d></i>".repeat(gd)}${"<i></i>".repeat(5-ga-gd)}</span>`}
+function fileDiff(f,i){
+  const id="f"+i,key=f.path+":"+f.add+":"+f.del,isViewed=viewed.has(key),split=diffMode==="split"&&!narrow();
+  let rows="";
+  for(const h of f.hunks){
+    rows+=`<tr class="hunk"><td colspan="${split?4:3}">${esc(h.header)}</td></tr>`;
+    if(!split){for(const l of h.lines)rows+=`<tr class="${l.t}"><td class="ln">${l.t!=="add"?l.o:""}</td><td class="ln">${l.t!=="del"?l.n:""}</td><td class="code">${hl(l.s,f.path)}</td></tr>`;continue}
+    const L=h.lines;let k=0;
+    while(k<L.length){
+      if(L[k].t==="ctx"){const c=hl(L[k].s,f.path);rows+=`<tr><td class="ln">${L[k].o}</td><td class="code ctx">${c}</td><td class="ln">${L[k].n}</td><td class="code ctx">${c}</td></tr>`;k++;continue}
+      const dels=[],adds=[];while(k<L.length&&L[k].t==="del")dels.push(L[k++]);while(k<L.length&&L[k].t==="add")adds.push(L[k++]);
+      for(let j=0;j<Math.max(dels.length,adds.length);j++){const d=dels[j],a=adds[j];
+        rows+=`<tr>${d?`<td class="ln del">${d.o}</td><td class="code del">${hl(d.s,f.path)}</td>`:`<td class="ln empty"></td><td class="code empty"></td>`}${a?`<td class="ln add">${a.n}</td><td class="code add">${hl(a.s,f.path)}</td>`:`<td class="ln empty"></td><td class="code empty"></td>`}</tr>`}}
+  }
+  const st={added:`<span class="lbl green">new file</span>`,deleted:`<span class="lbl red">deleted</span>`}[f.status]||"";
+  return `<div class="file ${isViewed?"collapsed":""}" id="${id}"><div class="file-h"><button class="tog" data-tog="${id}" aria-label="Toggle file">${ic(isViewed?"chev":"chevd")}</button>
+   <span class="mono" style="font-size:12px;white-space:nowrap"><span class="ic-green">+${f.add}</span> <span class="ic-red">−${f.del}</span></span>${squares(f.add,f.del)}
+   <span class="path" title="${esc(f.path)}">${esc(f.path)}</span>${st}
+   <label class="viewed"><input type="checkbox" data-viewed="${esc(key)}" ${isViewed?"checked":""}> Viewed</label></div>
+   <div class="file-b"><table class="diff ${split?"split":"unified"}">${split?'<colgroup><col class="lnc"><col><col class="lnc"><col></colgroup>':""}${rows}</table></div></div>`;
+}
+
+/* ================================================================ run page */
+async function renderRun(id,sub,force){
+  let d;try{d=await api("/api/runs/"+id)}catch(e){$("#view").innerHTML=`<div class="box blank"><h3>Run not found</h3><p>${esc(e.message)}</p></div>`;return}
+  const key=[sub,diffMode,d.status,d.stage,d.events.length,d.my_actions.join(),d.approvals.length,JSON.stringify(d.state.signoffs||{}),selCheck].join("|");
+  if(!force&&key===lastKey)return;lastKey=key;
+  const s=d.state,files=parseDiff(d.diff),add=files.reduce((a,f)=>a+f.add,0),del=files.reduce((a,f)=>a+f.del,0);
+  const commits=s.commits||[],creator=d.created_by_user?.name||d.created_by;
+  const verb=d.status==="DEPLOYED"?`<b>${esc(s.deployment?.approved_by)}</b> merged ${plural(commits.length,"commit")} into`:d.status==="REJECTED"?`${plural(commits.length,"commit")} proposed for`:`<b>${esc(creator)}</b> requested · agents want to merge ${plural(commits.length,"commit")} into`;
+  const tabs=[["conversation","comment","Conversation"],["plan","book","Plan",s.analysis?.acceptance_criteria?.length],["design","stack","Design"],
+    ["commits","commit","Commits",commits.length],["checks","check","Checks",checkItems(d).length],["files","file","Files changed",files.length],["agents","gear","Agents",d.usage.total.calls]];
+  $("#view").innerHTML=`<h1 class="ptitle">${esc(d.title)} <span class="num">#${short(d.id)}</span></h1>
+   <div class="pmeta">${statePill(d.status)} <span>${verb} <span class="branch">main</span> from <span class="branch">${esc(s.branch)}</span></span></div>
+   <nav class="tabnav">${tabs.map(([k,i,l,c])=>`<a href="#/run/${d.id}/${k}" class="${sub===k?"on":""}">${ic(i)} ${l}${c?` <span class="counter">${c}</span>`:""}</a>`).join("")}
+    ${files.length?`<span class="diffstat"><span class="ic-green">+${add}</span> <span class="ic-red">−${del}</span> ${squares(add,del)}</span>`:""}</nav>
+   <div id="tabbody">${(TABS[sub]||TABS.conversation)(d,files)}</div>`;
+  bindRun(d);
+  const on=$(".tabnav a.on");if(on){const nav=on.parentElement;nav.scrollLeft=on.offsetLeft-nav.clientWidth/2+on.clientWidth/2}
+}
+function bindRun(d){
+  $$("[data-act]").forEach(b=>b.onclick=()=>act(d,b.dataset.act,b.dataset.decision));
+  $$("[data-tog]").forEach(b=>b.onclick=()=>{const f=$("#"+b.dataset.tog);f.classList.toggle("collapsed");b.innerHTML=ic(f.classList.contains("collapsed")?"chev":"chevd")});
+  $$("[data-viewed]").forEach(c=>c.onchange=()=>{c.checked?viewed.add(c.dataset.viewed):viewed.delete(c.dataset.viewed);store.set("viewed",JSON.stringify([...viewed]));
+    const f=c.closest(".file");f.classList.toggle("collapsed",c.checked);f.querySelector("[data-tog]").innerHTML=ic(c.checked?"chev":"chevd");updateViewedCount()});
+  $$("[data-mode]").forEach(b=>b.onclick=()=>{diffMode=b.dataset.mode;store.set("diffMode",diffMode);lastKey="";renderRun(d.id,"files",true)});
+  $$("[data-check]").forEach(a=>a.onclick=e=>{e.preventDefault();selCheck=a.dataset.check;if(!location.hash.endsWith("/checks")){location.hash=`#/run/${d.id}/checks`;setTimeout(()=>{selCheck=a.dataset.check;lastKey="";tick(true)},0);return}lastKey="";renderRun(d.id,"checks",true)});
+  $$("[data-expand]").forEach(b=>b.onclick=()=>{const open=b.dataset.expand==="1";$$(".file").forEach(f=>f.classList.toggle("collapsed",!open));$$("[data-tog]").forEach(t=>t.innerHTML=ic(open?"chevd":"chev"))});
+  $$("[data-jump]").forEach(a=>a.onclick=e=>{e.preventDefault();const f=$("#"+a.dataset.jump);f.classList.remove("collapsed");f.scrollIntoView({behavior:"smooth"})});
+  updateViewedCount();
+}
+function updateViewedCount(){const el=$("#viewedCount");if(el){const all=$$("[data-viewed]");el.textContent=`${all.filter(c=>c.checked).length} / ${all.length} files viewed`}}
+
+/* ---------------- conversation ---------------- */
+const EVT={run_created:["plus","blue"],analysis_done:["book",""],plan_confirmed:["check","green"],code_inspected:["eye",""],design_proposed:["stack",""],
+  design_disagreement:["alert","amber"],design_revised:["stack","blue"],code_changed:["commit",""],tests_written:["check",""],checks_passed:["check","green"],check_failed:["x","red"],
+  security_passed:["shield","green"],security_blocked:["shield","red"],agent_overruled:["alert","amber"],scope_violation:["alert","red"],repeat_action_blocked:["alert","red"],malformed_output:["alert","amber"],
+  paused:["clock","amber"],resumed:["play","blue"],escalated:["alert","red"],review_pipeline:["person",""],approval_requested:["pr","green"],signed_off:["check","green"],
+  approved:["merge","purple"],rejected:["closed","red"],changes_requested:["comment","amber"],conflict_resolved:["check","blue"],baseline_failing:["alert","amber"],notification_failed:["bell","amber"]};
+const HUMAN={plan_confirmed:"confirmed the plan",plan_revision_requested:"asked for a revised plan",signed_off:"signed off",approved:"approved and merged",rejected:"closed this",changes_requested:"requested changes",conflict_resolved:"settled the design conflict"};
+const AGENT_OF={analysis:"analyst",architecture:"architect",development:"developer",qa:"qa",security:"security",release:"release"};
+function conversation(d){
+  const s=d.state,apprs=[...d.approvals];
+  const items=[`<div class="comment">${avatar(d.created_by_user?.name,true)}<div class="cbox"><div class="ch"><b>${esc(d.created_by_user?.name)}</b> opened this request ${ago(d.created_at)} <span class="lbl gray" style="margin-left:auto">${esc(ROLE[d.created_by_user?.role]||"")}</span></div><div class="cb md">${md(d.requirement)}</div></div></div>`];
+  for(const e of d.events){
+    if(["transition","idempotent_replay","provider_retry","run_created"].includes(e.kind))continue;
+    if(HUMAN[e.kind]){const a=apprs.find(x=>Math.abs(x.created_at-e.created_at)<3);if(a)apprs.splice(apprs.indexOf(a),1);const who=uname(a?.approver);
+      items.push(`<div class="comment">${avatar(who,true)}<div class="cbox"><div class="ch"><b>${esc(who)}</b> ${HUMAN[e.kind]} ${ago(e.created_at)}${e.kind==="approved"?`<span class="lbl purple" style="margin-left:auto">approved</span>`:e.kind==="signed_off"?`<span class="lbl green" style="margin-left:auto">signed off</span>`:""}</div><div class="cb">${a?.comment?md(a.comment):`<span class="muted">${esc(e.message)}</span>`}</div></div></div>`);continue}
+    if(e.kind==="approval_requested"&&s.release){const r=s.release;
+      items.push(`<div class="comment">${botav("release",true)}<div class="cbox"><div class="ch"><b>release</b> <span class="lbl gray">agent</span> posted the review summary ${ago(e.created_at)}<span class="lbl ${r.recommendation==="approve"?"green":"amber"}" style="margin-left:auto">recommends ${esc(r.recommendation.replace("_"," "))}</span></div>
+       <div class="cb"><p>${esc(r.review_summary)}</p><p><b>Test evidence:</b> ${esc(r.test_evidence)}</p><p style="margin-bottom:4px"><b>Known risks</b></p><ul>${r.known_risks.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><p><b>Rollback:</b> ${esc(r.rollback_plan)}</p></div></div></div>`);continue}
+    if(e.kind==="escalated")continue; // shown in the merge box
+    const [i,c]=EVT[e.kind]||["dot",""];const by=AGENT_OF[e.stage]||"";
+    items.push(`<div class="tlitem"><span class="badge ${c}">${ic(i)}</span><div class="tx">${by?`<b>${by}</b> `:""}${esc(e.message)}<span class="when">${ago(e.created_at)}</span>${e.kind==="check_failed"?` <a href="#" data-check="${failedCheckId(d,e)}">Details</a>`:""}</div></div>`);
+  }
+  return `<div class="tl">${items.join("")}</div>${mergeBox(d)}`;
+}
+function failedCheckId(d,e){const m=/attempt (\d+)/.exec(e.message);const k=(d.state.check_history||[]).findIndex(h=>String(h.iteration)===m?.[1]);return "tests"+Math.max(k,0)}
+function gateStatus(d){const s=d.state;
+  return [...(s.required_signoffs||[]).map(g=>({label:g.label,role:g.role,done:(s.signoffs||{})[g.id]})),{label:"Tech lead approval",role:"approver",done:d.status==="DEPLOYED"?{by:s.deployment?.approved_by}:null}]}
+function mergeBox(d){
+  const s=d.state,mine=d.my_actions,p=d.pending,checks=checkItems(d),failed=checks.filter(c=>c.st==="fail"&&c.current),running=d.status==="RUNNING";
+  if(d.status==="DEPLOYED")return `<div class="mergebox">${avatar(s.deployment?.approved_by,true)}<div class="mb merged"><div class="msec"><span class="bigic" style="background:var(--purple)">${ic("merge")}</span><div><h4>Merged and deployed</h4><p>${esc(s.deployment?.approved_by)} merged <span class="branch">${esc(s.branch)}</span> into <span class="branch">main</span> as ${esc(s.deployment?.merge_commit)} and deployed to ${esc(s.deployment?.environment)}.</p></div></div></div></div>`;
+  if(d.status==="REJECTED")return `<div class="mergebox"><div class="mb bad"><div class="msec"><span class="bigic" style="background:var(--red)">${ic("closed")}</span><div><h4>Closed without merging</h4><p>The agents' branch was left unmerged.</p></div></div></div></div>`;
+  const gates=gateStatus(d),done=gates.filter(g=>g.done).length,secs=[];
+  secs.push(`<div class="msec"><span class="bigic" style="background:${done===gates.length?"var(--green-btn)":"#bf8700"}">${ic(done===gates.length?"check":"person")}</span><div style="flex:1;min-width:0"><h4>${done===gates.length?"Reviews complete":"Review required"}</h4><p>${done} of ${gates.length} required reviews done${s.required_signoffs?"":" (reviewers are decided once checks pass)"}</p>
+    ${gates.map(g=>`<div class="checkline">${g.done?ic("check","ic-green"):ic("dot","ic-amber")} ${esc(g.label)} <span class="r">${g.done?esc(g.done.by):`needs ${esc(ROLE[g.role].toLowerCase())}`}</span></div>`).join("")}</div></div>`);
+  const cur=checks.filter(c=>c.current);
+  if(checks.length||running)secs.push(`<div class="msec"><span class="bigic" style="background:${running?"var(--blue)":failed.length?"var(--red)":"var(--green-btn)"}">${ic(running?"play":failed.length?"x":"check")}</span><div style="flex:1;min-width:0"><h4>${running?"Checks in progress":failed.length?`${plural(failed.length,"check")} failing`:"All checks have passed"}</h4><p>${cur.filter(c=>c.st==="pass").length} successful, ${failed.length} failing${checks.length>cur.length?` · ${checks.length-cur.length} from earlier attempts`:""}</p>
+    ${cur.map(c=>`<div class="checkline">${c.icon} <span>${esc(c.name)}</span> <span class="faint">${esc(c.sum)}</span><a class="r" href="#" data-check="${c.id}">Details</a></div>`).join("")}</div></div>`);
+  let head="",body="",tone="";
+  if(running){head="Agents are working";body=`Now on <b>${esc(d.stage)}</b>. This page updates by itself.`}
+  else if(d.status==="PLAN_REVIEW"){head="Plan review";tone="wait";body=`The analyst drafted ${s.analysis.acceptance_criteria.length} acceptance criteria. Read them on the <a href="#/run/${d.id}/plan">Plan</a> tab.${s.analysis.open_questions.length?`<div style="margin-top:6px"><b>Open questions</b><ul style="margin:4px 0 0;padding-left:18px">${s.analysis.open_questions.map(q=>`<li>${esc(q)}</li>`).join("")}</ul></div>`:""}`}
+  else if(d.status==="NEEDS_HUMAN"){const e=s.escalation||{};head=`Needs a person: ${esc((e.kind||"").replaceAll("_"," "))}`;tone="bad";
+    body=esc(e.message)+(e.kind==="design_conflict"?`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px"><div class="box" style="padding:10px">${botav("developer")} <b>developer</b><p style="margin:6px 0 0;color:var(--fg)">${esc((e.data.developer||[]).join(" "))}</p></div><div class="box" style="padding:10px">${botav("architect")} <b>architect</b><p style="margin:6px 0 0;color:var(--fg)">${esc(e.data.architect)}</p></div></div>`:"")+
+      (s.feedback?.length&&e.kind!=="design_conflict"?`<div class="logbox">${esc(s.feedback.at(-1))}</div>`:"")}
+  else if(d.status==="PAUSED"){head="Paused";tone="wait";body="The model provider was unavailable. Finished steps are saved and won't run again."}
+  else if(d.status==="AWAITING_APPROVAL"){const sec=s.security?.findings||[];head=p.signoff?`Waiting for ${esc(p.signoff.label)}`:"Ready to merge";tone=p.signoff?"wait":"ok";
+    body=esc(p.waiting_on)+(mine.includes("signoff")&&sec.length?`<div class="tscroll"><table class="t" style="margin-top:10px;border:1px solid var(--border-soft)"><tr><th>Severity</th><th>Finding you're accepting</th><th>Location</th></tr>${sec.map(f=>`<tr><td><span class="lbl ${["critical","high"].includes(f.severity)?"red":f.severity==="medium"?"amber":"gray"}">${esc(f.severity)}</span></td><td style="color:var(--fg)">${esc(f.title)}<div class="faint">${esc(f.recommendation)}</div></td><td class="mono">${esc(f.file)}:${f.line}</td></tr>`).join("")}</table></div>`:"")}
+  const color={ok:"var(--green-btn)",bad:"var(--red)",wait:"#bf8700"}[tone]||"var(--blue)";
+  secs.push(`<div class="msec"><span class="bigic" style="background:${color}">${ic(tone==="bad"?"alert":tone==="ok"?"merge":running?"play":"clock")}</span><div style="flex:1;min-width:0"><h4>${head}</h4><div style="font-size:13px;color:var(--muted);margin-top:2px">${body}</div></div></div>`);
+  const primary=turn(mine);
+  if(mine.length){
+    const btn=a=>{if(a==="resolve")return `<button class="btn primary" data-act="resolve" data-decision="developer">Side with developer</button><button class="btn" data-act="resolve" data-decision="architect">Side with architect</button>`;
+      if(a==="signoff")return `<button class="btn primary" data-act="signoff" data-decision="${esc(p.signoff.id)}">${ic("check")} ${esc(p.signoff.label)}</button>`;
+      const L={confirm_plan:["primary","Confirm plan"],revise_plan:["","Ask for a revised plan"],approve:["primary",`${ic("merge")} Merge and deploy`],request_changes:["","Request changes"],resume:["primary","Resume run"],reject:["danger",d.created_by===me.username?"Withdraw request":"Close run"]}[a];
+      return `<button class="btn ${L[0]}" data-act="${a}">${L[1]}</button>`};
+    const ph=d.status==="PLAN_REVIEW"?"Answer the open questions or add clarifications (optional when confirming)":mine.includes("request_changes")?"Leave a comment. Required for Request changes: the agents read it as guidance.":"Leave a comment (optional)";
+    secs.push(`<div class="msec actions">${primary.length?`<textarea id="cmt" placeholder="${ph}" style="min-height:72px;background:#fff"></textarea>`:`<p style="margin:0">Nothing for you to do right now.${d.created_by===me.username?" You'll get a notification when it ships.":""}</p>`}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;justify-content:flex-end">${[...mine].reverse().map(btn).join("")}</div></div>`);
+  } else if(!running) secs.push(`<div class="msec actions"><span class="muted" style="font-size:13px">You're signed in as ${esc(ROLE[me.role].toLowerCase())}, so this step isn't yours. Whoever owns it has been notified.</span></div>`);
+  return `<div class="mergebox">${avatar(me.name,true)}<div class="mb ${tone==="ok"?"ok":tone==="bad"?"bad":""}">${secs.join("")}</div></div>`;
+}
+function sidebar(d){
+  const s=d.state,gates=gateStatus(d),labels=[...(d.options.faults||[]).map(f=>`<span class="lbl red">${esc(f)}</span>`),d.options.plan_review?`<span class="lbl blue">plan review</span>`:"",s.design_history?.length?`<span class="lbl amber">design revised</span>`:"",s.violations?.length?`<span class="lbl red">scope violation blocked</span>`:""].filter(Boolean);
+  return `<aside class="side">
+   <div class="sec"><h5>Reviewers</h5>${gates.map(g=>`<div class="rev">${g.done?avatar(g.done.by):`<span class="av" style="background:#d1d9e0">${ic("person")}</span>`} <span>${esc(g.label)}</span><span class="s" title="${g.done?"done":"pending"}">${g.done?ic("check","ic-green"):ic("dot","ic-amber")}</span></div>`).join("")}</div>
+   <div class="sec"><h5>Waiting on</h5>${esc(d.pending.waiting_on||"Nobody")}</div>
+   <div class="sec"><h5>Labels</h5>${labels.length?`<div style="display:flex;gap:4px;flex-wrap:wrap">${labels.join("")}</div>`:"<span class='muted'>None</span>"}</div>
+   <div class="sec"><h5>Delivery</h5><div class="rev">${ic("commit","ic-gray")} ${s.iteration||0} of ${s.iteration_budget} build attempts</div><div class="rev">${ic("check","ic-gray")} Rubric ${s.rubric?s.rubric.score+"/100":"pending"}</div>
+     <div class="rev">${ic("gear","ic-gray")} $${d.usage.total.cost_usd.toFixed(3)} · ${d.usage.total.calls} model calls</div><div class="rev">${ic("book","ic-gray")} <span class="mono">${esc(d.repo_path.split("/").pop())}</span></div></div>
+   <div class="sec" style="border:0"><h5>Notifications</h5><span class="muted">The owner of each next step is notified in Slack. <a href="#/notifications">Your notifications</a></span></div></aside>`;
+}
+
+/* ---------------- checks ---------------- */
+function checkItems(d){const s=d.state,out=[],hist=s.check_history||[],fb=s.feedback||[];
+  const okc=st=>({pass:ic("check","ic-green"),fail:ic("x","ic-red"),pending:ic("dot","ic-amber spin")}[st]);
+  hist.forEach((h,k)=>{const latest=k===hist.length-1,msg=fb.find(f=>f.startsWith(`Iteration ${h.iteration} failed checks`));
+    out.push({id:"tests"+k,group:`Build attempt ${h.iteration}`,name:"Tests",st:h.tests_failed?"fail":"pass",sum:`${h.tests_passed} passed, ${h.tests_failed} failed`,current:latest,detail:{kind:"tests",h,msg,latest}});
+    out.push({id:"lint"+k,group:`Build attempt ${h.iteration}`,name:"Lint (ruff)",st:h.lint_issues?"fail":"pass",sum:h.lint_issues?`${h.lint_issues} issues`:"clean",current:latest,detail:{kind:"lint",h,latest}});});
+  if(s.security)out.push({id:"sec",group:"Security",name:"Security scan",st:s.security.verdict==="block"?"fail":"pass",sum:`${plural(s.security.findings.length,"finding")}`,current:true,detail:{kind:"security"}});
+  (s.violations||[]).forEach((v,k)=>out.push({id:"scope"+k,group:"Guards",name:"Scope guard",st:"fail",sum:`blocked edit (attempt ${v.iteration})`,current:false,detail:{kind:"scope",v}}));
+  if(s.rubric)out.push({id:"rubric",group:"Evaluation",name:"Delivery rubric",st:s.rubric.score===100?"pass":"fail",sum:`${s.rubric.score}/100`,current:true,detail:{kind:"rubric"}});
+  if(d.status==="RUNNING"&&["qa","security"].includes(d.stage))out.push({id:"run",group:"In progress",name:d.stage==="qa"?"Tests":"Security scan",st:"pending",sum:"running",current:true,detail:{kind:"pending"}});
+  out.forEach(c=>c.icon=okc(c.st));return out}
+function checksTab(d){
+  const items=checkItems(d);if(!items.length)return `<div class="box blank" style="margin-top:16px">${ic("check")}<h3>No checks yet</h3><p>Checks run after the developer agent's first commit.</p></div>`;
+  const cur=items.find(c=>c.id===selCheck)||items.find(c=>c.st==="fail"&&c.current)||items.at(-1);let grp="";
+  const list=items.map(c=>{const g=c.group!==grp?`<div class="grp">${esc(c.group)}</div>`:"";grp=c.group;return g+`<a href="#" data-check="${c.id}" class="${c===cur?"on":""}">${c.icon}<span>${esc(c.name)}<small>${esc(c.sum)}</small></span></a>`}).join("");
+  const s=d.state,x=cur.detail;let det="";
+  if(x.kind==="tests"){det=`<p class="muted" style="margin-top:0">The full suite ran in the run's sandbox: the original tests plus the QA agent's acceptance tests.</p>`;
+    if(x.latest&&s.tests)det+=s.tests.cases.map(c=>`<div class="steprow">${c.status==="passed"?ic("check","ic-green"):ic("x","ic-red")} <span class="mono">${esc(c.name)}</span><span class="r">${esc((c.file||"").split(".").pop())}</span></div>${c.message?`<div class="logbox">${esc(c.message)}</div>`:""}`).join("");
+    else if(x.msg)det+=`<div class="logbox">${esc(x.msg)}</div><p class="muted" style="font-size:12px">This output went back to the developer agent as feedback for the next attempt.</p>`;
+    else det+=`<p>${x.h.tests_passed} passed, ${x.h.tests_failed} failed.</p>`}
+  else if(x.kind==="lint"){const issues=x.latest?(s.lint?.issues||[]):[];det=issues.length?issues.map(i=>`<div class="steprow">${ic("x","ic-red")} <span class="mono">${esc(i.file)}:${i.line}</span> ${esc(i.code)} ${esc(i.message)}</div>`).join(""):`<div class="steprow">${ic("check","ic-green")} No issues (rules E4, E7, E9, F, B)</div>`}
+  else if(x.kind==="security"){det=`<p class="muted" style="margin-top:0">${esc(s.security.summary)} The agent can add findings but can't dismiss high or critical ones from the scanners.</p><div class="tscroll"><table class="t" style="border:1px solid var(--border-soft)"><tr><th>Severity</th><th>Finding</th><th>Location</th><th>Source</th></tr>${s.security.findings.map(f=>`<tr><td><span class="lbl ${["critical","high"].includes(f.severity)?"red":f.severity==="medium"?"amber":"gray"}">${esc(f.severity)}</span></td><td>${esc(f.title)}<div class="faint">${esc(f.recommendation)}</div></td><td class="mono">${esc(f.file)}:${f.line}</td><td class="muted">${esc(f.source)}</td></tr>`).join("")||`<tr><td colspan=4 class="muted">No findings</td></tr>`}</table></div>`}
+  else if(x.kind==="scope")det=`<div class="steprow">${ic("x","ic-red")} Attempt ${x.v.iteration}: <b>${esc(x.v.agent)}</b> tried to edit <span class="mono">${esc(x.v.paths.join(", "))}</span></div><p class="muted">The whole changeset was rejected before anything was written, and the agent was told which files it may edit.</p>`;
+  else if(x.kind==="rubric")det=`<p class="muted" style="margin-top:0">Baseline before any change: ${s.rubric.baseline.passed}/${s.rubric.baseline.tests} original tests passing.</p>`+s.rubric.items.map(i=>`<div class="steprow">${i.passed?ic("check","ic-green"):ic("x","ic-red")} ${esc(i.criterion.replaceAll("_"," "))}<span class="r">${esc(i.evidence)}</span></div>`).join("");
+  else det=`<p class="muted">Running…</p>`;
+  return `<div class="checks"><div class="cl">${list}</div><div class="cd"><div style="display:flex;gap:8px;align-items:center">${cur.icon}<h3>${esc(cur.name)}</h3></div><div class="faint" style="font-size:12px;margin:2px 0 14px">${esc(cur.group)} · ${esc(cur.sum)}</div>${det}</div></div>`;
+}
+
+const TABS={
+ conversation:d=>`<div class="layout"><div style="min-width:0">${conversation(d)}</div>${sidebar(d)}</div>`,
+ plan:d=>{const a=d.state.analysis;if(!a)return `<div class="box blank" style="margin-top:16px">${ic("book")}<h3>The analyst is still working</h3></div>`;
+  const cov=Object.fromEntries((d.state.qa?.ac_coverage||[]).map(c=>[c.ac_id,c.tests]));const cases=Object.fromEntries((d.state.tests?.cases||[]).map(c=>[c.name,c.status]));
+  const verified=a.acceptance_criteria.filter(c=>(cov[c.id]||[]).some(t=>cases[t]==="passed")).length;
+  return `<div class="layout"><div style="min-width:0"><div class="comment">${botav("analyst",true)}<div class="cbox"><div class="ch"><b>analyst</b> <span class="lbl gray">agent</span> drafted the plan</div><div class="cb">${esc(a.summary)}</div></div></div>
+   <div class="box" style="margin-bottom:16px"><div class="box-h"><b>Acceptance criteria</b><span class="muted">${Object.keys(cov).length?`${verified} of ${a.acceptance_criteria.length} verified by passing tests`:"not tested yet"}</span></div>
+    <ul class="tasklist">${a.acceptance_criteria.map(c=>{const ts=cov[c.id]||[],ok=ts.some(t=>cases[t]==="passed");
+      return `<li><span class="ck ${ok?"on":""}">${ok?ic("check"):""}</span><div style="min-width:0"><b class="mono">${c.id}</b> <b>Given</b> ${esc(c.given)}, <b>when</b> ${esc(c.when)}, <b>then</b> ${esc(c.then)}.
+       ${ts.length?`<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">${ts.map(t=>`<span class="lbl ${cases[t]==="passed"?"green":cases[t]==="failed"?"red":"gray"}" title="Test">${esc(t)}</span>`).join("")}</div>`:""}</div></li>`}).join("")}</ul></div>
+   <div class="box"><div class="box-h"><b>Task plan</b></div><div class="tscroll"><table class="t">${a.tasks.map(t=>`<tr><td class="mono" style="width:40px">${t.id}</td><td style="white-space:nowrap">${botav(t.owner_agent)} ${esc(t.owner_agent)}</td><td><b>${esc(t.title)}</b><div class="muted">${esc(t.description)}</div></td></tr>`).join("")}</table></div></div></div>
+   <aside class="side"><div class="sec"><h5>Assumptions</h5><ul style="margin:0;padding-left:18px">${a.assumptions.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+    <div class="sec"><h5>Open questions</h5>${a.open_questions.length?`<ul style="margin:0;padding-left:18px">${a.open_questions.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:"None"}</div>
+    ${d.state.clarifications?.length?`<div class="sec"><h5>Answers from the requester</h5>${d.state.clarifications.map(c=>`<p style="margin:0 0 6px">${avatar(c.by)} ${esc(c.text)}</p>`).join("")}</div>`:""}</aside></div>`},
+ design:d=>{const g=d.state.design;if(!g)return `<div class="box blank" style="margin-top:16px">${ic("stack")}<h3>No design yet</h3></div>`;
+  return `<div class="layout"><div style="min-width:0"><div class="comment">${botav("architect",true)}<div class="cbox"><div class="ch"><b>architect</b> <span class="lbl gray">agent</span> proposed the design${d.state.design_history?.length?` <span class="lbl amber">revised ${d.state.design_history.length}×</span>`:""}</div><div class="cb"><p>${esc(g.design)}</p><p><b>Test strategy:</b> ${esc(g.test_strategy)}</p></div></div></div>
+   <div class="box" style="margin-bottom:16px"><div class="box-h"><b>Impacted components</b></div><div class="tscroll"><table class="t">${g.impacted_components.map(c=>`<tr><td style="width:1%">${ic("file","ic-gray")}</td><td class="mono">${esc(c.path)}</td><td><span class="lbl ${c.change_type==="create"?"green":c.change_type==="modify"?"amber":"gray"}">${c.change_type.replace("_"," ")}</span></td><td class="muted">${esc(c.reason)}</td></tr>`).join("")}</table></div></div>
+   <div class="box"><div class="box-h"><b>How the code was found</b><span class="muted">static index of symbols, imports and dependents</span></div><div class="tscroll"><table class="t"><tr><th>File</th><th class="n">Score</th><th>Symbols</th><th>Used by</th></tr>${(d.state.candidates||[]).map(c=>`<tr><td class="mono">${esc(c.path)}</td><td class="n">${c.score}</td><td class="muted">${esc(c.symbols.join(", "))}</td><td class="muted mono">${esc(c.imported_by.join(", "))}</td></tr>`).join("")}</table></div></div></div>
+   <aside class="side"><div class="sec"><h5>Will modify</h5>${g.files_to_modify.map(f=>`<div class="mono">${esc(f)}</div>`).join("")||"None"}</div><div class="sec"><h5>Will create</h5>${g.files_to_create.map(f=>`<div class="mono">${esc(f)}</div>`).join("")||"None"}</div>
+    <div class="sec"><h5>Risks</h5><ul style="margin:0;padding-left:18px">${g.risks.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div></aside></div>`},
+ commits:d=>{const cs=d.state.commits||[];if(!cs.length)return `<div class="box blank" style="margin-top:16px">${ic("commit")}<h3>No commits yet</h3></div>`;
+  return `<div class="box" style="margin-top:16px"><div class="box-h">${ic("commit")} <b>Commits on <span class="mono">${esc(d.state.branch)}</span></b><a class="btn sm" href="/api/runs/${d.id}/patch" download style="margin-left:auto">Download patch</a></div>
+   ${cs.map(c=>`<div class="box-row">${botav(c.by)}<div style="flex:1;min-width:0"><b>${c.by==="qa"?"Add acceptance tests":"Implement change (build attempt "+c.iteration+")"}</b><div class="muted" style="font-size:12px">${esc(c.by)} agent committed · ${c.files.map(f=>`<span class="mono">${esc(f)}</span>`).join(", ")}</div></div><span class="mono lbl gray">${esc(c.sha)}</span></div>`).join("")}</div>
+   ${["engineer","admin"].includes(me.role)?`<p class="faint" style="font-size:12px">Inspect locally: <span class="mono">${esc(d.workspace_hint)}</span></p>`:""}`},
+ checks:d=>checksTab(d),
+ files:(d,files)=>{if(!files.length)return `<div class="box blank" style="margin-top:16px">${ic("file")}<h3>No changes yet</h3><p>The developer agent hasn't committed anything.</p></div>`;
+  const dirs={};files.forEach((f,i)=>{const p=f.path.split("/"),dir=p.slice(0,-1).join("/");(dirs[dir]=dirs[dir]||[]).push([p.at(-1),f,i])});
+  const tree=Object.entries(dirs).map(([dir,fs])=>`${dir?`<div class="dir">${esc(dir)}/</div>`:""}${fs.map(([n,f,i])=>`<a href="#" data-jump="f${i}">${ic("file","ic-gray")} <span>${esc(n)}</span><span class="cnt"><span class="ic-green">+${f.add}</span> <span class="ic-red">−${f.del}</span></span></a>`).join("")}`).join("");
+  return `<div class="ftoolbar"><div class="btn-group" ${narrow()?'style="display:none"':""}><button class="btn sm ${diffMode==="unified"?"on":""}" data-mode="unified">${ic("unified")} Unified</button><button class="btn sm ${diffMode==="split"?"on":""}" data-mode="split">${ic("split")} Split</button></div>
+    <button class="btn sm" data-expand="1">Expand all</button><button class="btn sm" data-expand="0">Collapse all</button><span class="muted" style="font-size:12px" id="viewedCount"></span>
+    <a class="btn sm" href="/api/runs/${d.id}/patch" download style="margin-left:auto">Download patch</a></div>
+   <div class="fc"><nav class="ftree box">${tree}</nav><div style="min-width:0">${files.map(fileDiff).join("")}</div></div>`},
+ agents:d=>{const u=d.usage;return `<div class="box" style="margin-top:16px"><div class="box-h"><b>Usage by agent</b><span class="muted">${u.total.calls} calls · ${u.total.input_tokens.toLocaleString()} in / ${u.total.output_tokens.toLocaleString()} out tokens · $${u.total.cost_usd.toFixed(4)}${d.options.provider==="mock"?" (simulated)":""}</span></div>
+   <div class="tscroll"><table class="t"><tr><th>Agent</th><th class="n">Calls</th><th class="n">Failed</th><th class="n">Tokens in</th><th class="n">Tokens out</th><th class="n">Cost</th><th class="n">Latency</th></tr>
+   ${u.per_agent.map(a=>`<tr><td style="white-space:nowrap">${botav(a.agent)} ${esc(a.agent.replace("_"," "))}</td><td class="n">${a.calls}</td><td class="n ${a.failures?"ic-red":""}">${a.failures}</td><td class="n">${a.tin}</td><td class="n">${a.tout}</td><td class="n">$${(a.cost||0).toFixed(4)}</td><td class="n">${a.latency} ms</td></tr>`).join("")}</table></div></div>
+   <div class="box" style="margin-top:16px"><div class="box-h"><b>Every attempt</b><span class="muted">retries, repairs and replays are all recorded</span></div><div class="tscroll"><table class="t"><tr><th class="n">#</th><th>Step</th><th>Agent</th><th class="n">Try</th><th>Result</th><th class="n">ms</th><th>Error</th></tr>
+   ${d.executions.map(e=>`<tr><td class="n">${e.id}</td><td class="mono">${esc(e.step_key)}</td><td>${esc(e.agent)}</td><td class="n">${e.attempt}</td><td><span class="lbl ${e.status==="ok"?"green":"red"}">${esc(e.status.replace("_"," "))}</span></td><td class="n">${e.latency_ms}</td><td class="muted">${esc(e.error||"")}</td></tr>`).join("")}</table></div></div>`},
+};
+
+async function act(d,a,decision){
+  const comment=$("#cmt")?.value||"";
+  if(["revise_plan","request_changes"].includes(a)&&!comment.trim()){toast("Add a comment so the agents know what to change.");$("#cmt")?.focus();return}
+  if(a==="approve"&&!confirm("Merge this branch into main and deploy to staging?"))return;
+  if(a==="reject"&&!confirm(d.created_by===me.username?"Withdraw this request?":"Close this run without merging?"))return;
+  try{await api(`/api/runs/${d.id}/${a.replace("_","-")}`,{method:"POST",body:JSON.stringify({comment,decision})});
+    toast({approve:"Merged and deployed. The requester has been notified.",signoff:"Sign-off recorded. The tech lead has been notified.",confirm_plan:"Plan confirmed. The agents continue.",resume:"Resumed.",request_changes:"Sent back to the agents.",resolve:"Decision recorded. The agents continue."}[a]||"Done.");
+    if($("#cmt"))$("#cmt").value="";lastKey="";tick(true)}catch(e){toast(e.message)}
+}
+
+/* ================================================================ notifications */
+function renderNotifs(n){
+  store.set("seen:"+me.username,String(Date.now()/1000));renderChrome(n);
+  const mode=n.delivery.mode==="slack"?`<div class="flash">${ic("slack")}<div><b>Slack is connected</b> (${[n.delivery.bot&&"direct messages",n.delivery.webhook&&"team channel"].filter(Boolean).join(" + ")}). ${n.slack_linked?"Your Slack account is linked, so these arrive as DMs.":"Your account has no Slack ID yet, so you're @-mentioned in the team channel."}</div></div>`
+    :`<div class="flash warn">${ic("slack")}<div><b>Slack isn't connected yet.</b> Notifications are recorded here and not sent. An admin can set <code>SLACK_BOT_TOKEN</code> (direct messages) or <code>SLACK_WEBHOOK_URL</code> (team channel).</div></div>`;
+  const row=x=>{const st={sent:`<span class="lbl green">sent to Slack</span>`,failed:`<span class="lbl red" title="${esc(x.error)}">Slack failed</span>`,pending:`<span class="lbl amber">sending</span>`,recorded:`<span class="lbl gray">not sent</span>`}[x.status];
+    const [h,...rest]=x.text.split("\n");
+    return `<div class="listrow">${ic(x.kind==="shipped"?"merge":x.kind==="closed"?"closed":"bell",x.kind==="shipped"?"ic-purple":x.kind==="closed"?"ic-red":"ic-amber")}<div style="min-width:0"><a class="ti" style="font-size:14px" href="#/run/${x.run_id}">${esc(h.replaceAll("*",""))}</a><div class="meta">${esc(rest.join(" "))}</div></div>
+     <div class="rt">${n.all?avatar(uname(x.username)):""}${st}<span>${ago(x.created_at)}</span></div></div>`};
+  $("#view").innerHTML=`<h1 class="page">Notifications</h1>${mode}
+   <div class="box"><div class="box-h"><b>For you</b><span class="muted">Only the person who owns the next step is notified.</span></div>${n.items.length?n.items.map(row).join(""):`<div class="blank">${ic("bell")}<h3>All caught up</h3><p>You'll be notified when something needs you.</p></div>`}</div>
+   ${n.all?`<div class="box" style="margin-top:16px"><div class="box-h"><b>All deliveries</b><span class="muted">admin view</span></div>${n.all.map(row).join("")||`<div class="blank">None yet</div>`}</div>`:""}`;
+}
+
+/* ================================================================ audit */
+async function renderAudit(){
+  let a;try{a=await api("/api/audit")}catch(e){$("#view").innerHTML=`<div class="box blank"><h3>${esc(e.message)}</h3></div>`;return}
+  $("#view").innerHTML=`<h1 class="page">Audit trail</h1>
+  <div class="box"><div class="box-h"><b>Human decisions</b><span class="counter">${a.decisions.length}</span></div><div class="tscroll"><table class="t"><tr><th>When</th><th>Who</th><th>Decision</th><th>Run</th><th>Comment</th></tr>
+   ${a.decisions.map(x=>`<tr><td class="muted" style="white-space:nowrap">${ago(x.created_at)}</td><td style="white-space:nowrap">${avatar(uname(x.approver))} ${esc(uname(x.approver))}</td><td><span class="lbl ${x.decision==="approve"?"purple":x.decision.startsWith("signoff")||x.decision==="confirm_plan"?"green":["rejected","withdrawn"].includes(x.decision)?"red":"gray"}">${esc(x.decision.replace(":"," · ").replaceAll("_"," "))}</span></td><td><a href="#/run/${x.run_id}">${esc(x.title)}</a></td><td class="muted">${esc(x.comment||"")}</td></tr>`).join("")||`<tr><td colspan=5 class="muted">No decisions yet</td></tr>`}</table></div></div>
+  <div class="box" style="margin-top:16px"><div class="box-h"><b>Exceptions and escalations</b></div>${a.events.map(e=>{const [i,c]=EVT[e.kind]||["dot",""];return `<div class="listrow">${ic(i,{red:"ic-red",amber:"ic-amber",purple:"ic-purple",green:"ic-green",blue:"ic-blue"}[c]||"ic-gray")}<div style="min-width:0"><a href="#/run/${e.run_id}" class="ti" style="font-size:14px">${esc(e.title)}</a><div class="meta">${esc(e.kind.replaceAll("_"," "))} · ${esc(e.message)}</div></div><div class="rt">${ago(e.created_at)}</div></div>`}).join("")}</div>`;
+}
+
+boot().catch(()=>showLogin());
+</script>
+</body>
+</html>
